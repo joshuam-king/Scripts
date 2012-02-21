@@ -1,0 +1,94 @@
+#!/bin/bash
+# cPanel/WHM System Summary Script
+#
+# This script displays a quick overview of the system status upon root logins.
+#
+# Written by Patrick Stueck
+REVISION=2;
+
+if [ ! -d "/root/.cpanel" ]; then
+	echo "Exiting.  This is not a cPanel Machine."
+	exit 1
+fi
+
+#set colors
+red='\E[1;31m';
+yellow='\E[1;33m';
+green='\E[1;32m';
+white='e[1;37m';
+normal='tput sgr0';
+
+#get primary ip
+IPADDR=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
+
+WHMVER=`/usr/local/cpanel/cpanel -V`
+
+###
+### BEGIN APACHE SECTION
+###
+
+#tests if apache is active or not, if port 80 is open on server, then assumes apache is online, if 0 apache offline
+APACHEACTIVE=`netstat -na |grep :80 |grep LISTEN |wc -l`
+if [ "$APACHEACTIVE" == "0" ]; then
+	APACHEONLINE="NO"
+   else
+	APACHEONLINE="YES"
+   fi
+
+if [ "$APACHEONLINE" == "YES" ]; then
+	APACHEVERSION=`httpd -v |grep version |awk '{ print $3}' |cut -c 8-13`
+	APACHECONNECTS=`netstat -n | grep :80 |wc -l`
+	APACHEOUTPUT="$APACHEVERSION Online / Current Connections $APACHECONNECTS"
+   else
+	APACHEOUTPUT="OFFLINE"
+   fi
+
+###
+### BEGIN MYSQL SECTION
+###
+
+MYSQLACTIVE=`service mysql status |awk '{ print $2}'`
+if [ "$MYSQLACTIVE" = "running" ]; then
+	MYSQLVERSION=`mysql -V | awk '{ print $5}' | cut -d ',' -f 1`
+	MYSQLPROCESSES=`mysqladmin status |awk '{ print $4}'`
+	MYSQLOUTPUT="$MYSQLVERSION Online / Active Threads: $MYSQLPROCESSES"
+   else
+	MYSQLOUTPUT="OFFLINE"
+   fi
+
+###
+### BEGIN EXIM SECTION
+###
+
+EXIMACTIVE=`service exim status |awk '{ print $5}'`
+if [ "$EXIMACTIVE" = "running..." ]; then
+	MAILMSGS=`exim -bpc`
+	EXIMOUTPUT="Online / Messages in Queue: $MAILMSGS"
+   else
+	EXIMOUTPUT="OFFLINE"
+   fi
+	
+PHPVERSION=`php -v |grep cli |awk '{ print $2}'`
+
+###
+### DISPLAY SUMMARY INFORMATION
+###
+
+echo ""
+echo " ########################## SYSTEM SUMMARY ##########################"
+ uptime
+echo ""
+echo " Hostname:    $HOSTNAME"
+echo " Primary IP:  $IPADDR"
+echo ""
+echo " System Version Information"
+echo " ------------------------------"
+echo " WHM Version: $WHMVER"
+echo " PHP Version: $PHPVERSION"
+echo ""
+echo " Service Summary"
+echo " ------------------------------"
+echo " Apache $APACHEOUTPUT"
+echo " MySQL $MYSQLOUTPUT"
+echo " Exim $EXIMOUTPUT"
+echo ""
