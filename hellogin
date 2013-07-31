@@ -1,10 +1,11 @@
 #!/bin/bash
 # cPanel/WHM System Summary Script
 #
-# This script displays a quick overview of the system status upon root logins.
+# This script displays a quick overview of the system status upon shell login
 #
 # Originally Written by Patrick Stueck
-REVISION=2;
+# Adapted by Josh King <j.king@kualo.com>
+REVISION=3;
 
 if [ ! -d "/root/.cpanel" ]; then
 	echo "Exiting.  This is not a cPanel Machine."
