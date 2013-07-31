@@ -61,7 +61,7 @@ if [ "$MYSQLACTIVE" = "running" ]; then
 ### BEGIN EXIM SECTION
 ###
 
-EXIMACTIVE=`service exim status |awk '{ print $5}'`
+EXIMACTIVE=`service exim status |awk '{ print $NF}'`
 if [ "$EXIMACTIVE" = "running..." ]; then
 	MAILMSGS=`exim -bpc`
 	EXIMOUTPUT="Online / Messages in Queue: $MAILMSGS"
