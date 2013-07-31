@@ -47,7 +47,7 @@ if [ "$APACHEONLINE" == "YES" ]; then
 ### BEGIN MYSQL SECTION
 ###
 
-MYSQLACTIVE=`service mysql status |awk '{ print $2}'`
+MYSQLACTIVE=`service mysql status |awk '{ print $3}'`
 if [ "$MYSQLACTIVE" = "running" ]; then
 	MYSQLVERSION=`mysql -V | awk '{ print $5}' | cut -d ',' -f 1`
 	MYSQLPROCESSES=`mysqladmin status |awk '{ print $4}'`
