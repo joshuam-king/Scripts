@@ -83,7 +83,7 @@ PHPVERSION=`php -v |grep cli |awk '{ print $2}'`
 ###
 ### DISPLAY SUMMARY INFORMATION
 ###
-echo " ************************* WELCOME KUALOITES! ***********************"
+echo " ************************* WELCOME!  ***********************"
 echo " ######################## HERE IS THE CURRENT #######################"
 echo " ########################## SYSTEM SUMMARY ##########################"
  uptime
