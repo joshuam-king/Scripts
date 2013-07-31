@@ -3,7 +3,7 @@
 #
 # This script displays a quick overview of the system status upon root logins.
 #
-# Written by Patrick Stueck
+# Originally Written by Patrick Stueck
 REVISION=2;
 
 if [ ! -d "/root/.cpanel" ]; then
