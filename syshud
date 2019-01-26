@@ -1,12 +1,11 @@
 #!/bin/bash
 # Display basic system info when logging in to a cpanel server
-# 
-# Adapted by Josh King <j.king@kualo.com>
-REVISION=beta5;
+# Adapted by Josh King <josh@joshuaking.org>
+REVISION=0.1;
 
 if [ ! -d "/root/.cpanel" ]; then
-	echo "Exiting.  This is not a cPanel Machine."
-	exit 1
+        echo "Exiting.  This is not a cPanel Machine."
+        exit 1
 fi
 
 #set colors
@@ -17,21 +16,21 @@ white='e[1;37m';
 normal='tput sgr0';
 
 #get primary ip
-IPADDR=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
-
+IPADDR=`/sbin/ifconfig eth0 | grep -m 1 'inet' | cut -f2 |awk '{ print $2}'`
 WHMVER=`/usr/local/cpanel/cpanel -V`
 #Get Basic OS Info
 KERNFO=`uname -or`
-OSVER=`cat /etc/redhat-release | awk '{ print $1,$3}'`
+OSVER=`cat /etc/redhat-release | awk '{ print $1,$4}'`
 
 #Get in depth info on IO
-IOCT=`iostat -txN | sed -n '6,21p'`
+#Normally unless run in realtime, these stats are fairly useless for me. Enable if you want them
+#IOCT=`iostat -txN | sed -n '6,21p'`
 #Memory use
-MEMCT=`vmstat -s -S M | head`
+MEMCT=`/bin/free -h -m -t`
 # TOP CPU
-TCU=`ps aux | awk '{print $2, "\t"$3,"\t" $11}' | sort -k2r | head -n 10`
+TCU=`ps aux | awk '{print $2, "\t"$3,"\t" $11}' | sort -k2r | head -n 5`
 #TOP RAM
-TRAM=` ps aux | awk '{print $2, "\t"$4,"\t" $11}' | sort -k2r | head -n 10`
+TRAM=` ps aux | awk '{print $2, "\t"$4,"\t" $11}' | sort -k2r | head -n 5`
 
 ###
 ### BEGIN APACHE SECTION
@@ -40,50 +39,49 @@ TRAM=` ps aux | awk '{print $2, "\t"$4,"\t" $11}' | sort -k2r | head -n 10`
 #tests if apache is active or not, if port 80 is open on server, then assumes apache is online, if 0 apache offline
 APACHEACTIVE=`netstat -na |grep :80 |grep LISTEN |wc -l`
 if [ "$APACHEACTIVE" == "0" ]; then
-	APACHEONLINE="NO"
+        APACHEONLINE="NO"
    else
-	APACHEONLINE="YES"
+        APACHEONLINE="YES"
    fi
 
 if [ "$APACHEONLINE" == "YES" ]; then
-	APACHEVERSION=`httpd -v |grep version |awk '{ print $3}' |cut -c 8-13`
-	APACHECONNECTS=`netstat -n | grep :80 |wc -l`
-	APACHEOUTPUT="$APACHEVERSION Online / Current Connections $APACHECONNECTS"
+        APACHEVERSION=`httpd -v |grep version |awk '{ print $3}' |cut -c 8-13`
+        APACHECONNECTS=`netstat -n | grep :80 |wc -l`
+        APACHEOUTPUT="$APACHEVERSION Online / Current Connections $APACHECONNECTS"
    else
-	APACHEOUTPUT="OFFLINE"
+        APACHEOUTPUT="OFFLINE"
    fi
 
 ###
 ### BEGIN MYSQL SECTION
 ###
 
-MYSQLACTIVE=`service mysql status |awk '{ print $3}'`
-if [ "$MYSQLACTIVE" = "running" ]; then
-	MYSQLVERSION=`mysql -V | awk '{ print $5}' | cut -d ',' -f 1`
-	MYSQLPROCESSES=`mysqladmin status |awk '{ print $4}'`
-	MYSQLOUTPUT="$MYSQLVERSION Online / Active Threads: $MYSQLPROCESSES"
+MYSQLACTIVE=`systemctl status mysql | grep Active | awk '{ print $3}'`
+if [ "$MYSQLACTIVE" = "(running)" ]; then
+        MYSQLVERSION=`mysql -V | awk '{ print $5}' | cut -d ',' -f 1`
+        MYSQLPROCESSES=`mysqladmin status |awk '{ print $4}'`
+        MYSQLOUTPUT="$MYSQLVERSION Online / Active Threads: $MYSQLPROCESSES"
    else
-	MYSQLOUTPUT="OFFLINE"
+        MYSQLOUTPUT="OFFLINE"
    fi
 
 ###
 ### BEGIN EXIM SECTION
 ###
 
-EXIMACTIVE=`service exim status |awk '{ print $NF}'`
-if [ "$EXIMACTIVE" = "running..." ]; then
-	MAILMSGS=`exim -bpc`
-	EXIMOUTPUT="Online / Messages in Queue: $MAILMSGS"
+EXIMACTIVE=`systemctl status exim | grep Active | awk '{ print $3}'`
+if [ "$EXIMACTIVE" = "(running)" ]; then
+        MAILMSGS=`exim -bpc`
+        EXIMOUTPUT="Online / Messages in Queue: $MAILMSGS"
    else
-	EXIMOUTPUT="OFFLINE"
+        EXIMOUTPUT="OFFLINE"
    fi
-	
+
 PHPVERSION=`php -v |grep cli |awk '{ print $2}'`
 
 ###
 ### DISPLAY SUMMARY INFORMATION
 ###
-echo " ************************* WELCOME!  ***********************"
 echo " ######################## HERE IS THE CURRENT #######################"
 echo " ########################## SYSTEM SUMMARY ##########################"
  uptime
@@ -109,9 +107,9 @@ echo " ######################### EXTENDED INFORMATION #####################"
 echo ""
 echo " ---Top PID CPU USEAGE---"
 echo "   $TCU"
-echo " ---Top PID RAM USAGE---" 
+echo " ---Top PID RAM USAGE---"
 echo "   $TRAM"
-echo " ---CURRENT SYSTEM MEMORY USAGE ---"
+echo " ---SYSTEM MEMORY USAGE---"
 echo "    $MEMCT"
-echo "-- IOstat RECORD (RUN INTERACTIVELY FOR REALTIME COUNTS)---"
-echo "   $IOCT"
+#echo "-- IOstat RECORD (RUN INTERACTIVELY FOR REALTIME COUNTS)---"
+#echo "   $IOCT"
